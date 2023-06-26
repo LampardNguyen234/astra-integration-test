@@ -1,7 +1,8 @@
 package common
 
 import (
-	"math"
+	"encoding/hex"
+	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"math/big"
 )
 
@@ -32,7 +33,7 @@ func RandInt64() int64 {
 // RandInterval returns a random int64 x where a <= x < b && a < b.
 func RandInterval(a, b int64) int64 {
 	if b <= a {
-		return -math.MinInt64
+		return 0
 	}
 	return a + RandInt64()%(b-a)
 }
@@ -53,4 +54,11 @@ func RandUInterval(a, b uint64) uint64 {
 		return 0
 	}
 	return a + RandUint64()%(b-a)
+}
+
+// RandKeyInfo returns a random key info.
+func RandKeyInfo() *account.KeyInfo {
+	ret, _ := account.NewKeyInfoFromPrivateKey(hex.EncodeToString(RandBytes(32)))
+
+	return ret
 }

@@ -1,0 +1,18 @@
+{
+	"Logger": {
+		"LogPath": "",
+		"Level": 0,
+		"Color": false
+	},
+	"TestSuite": {
+		"SdkConfig": {
+			"Endpoint": "http://206.189.158.191",
+			"TendermintPort": "26657",
+			"ChainID": "astra_11115-1"
+		},
+		"SendSuite": {
+			"Enabled": true,
+			"MasterKey": "SEND_SUITE_MASTER_KEY"
+		}
+	}
+}
