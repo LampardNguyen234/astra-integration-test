@@ -18,32 +18,32 @@ func (s *SendSuite) RunTest() {
 	defaultPrefunded := 0.3
 
 	tcs := []sendTestCase{
-		//{
-		//	name: "should be able to send where amt + fee >= balance",
-		//	txParams: msg_params.TxParams{
-		//		PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-		//		GasLimit:      defaultTxParams.GasLimit,
-		//		GasAdjustment: defaultTxParams.GasAdjustment,
-		//		GasPrice:      defaultTxParams.GasPrice,
-		//	},
-		//	recipient: repoCommon.RandKeyInfo(),
-		//	amt:       defaultTestAmt,
-		//	prefunded: defaultPrefunded,
-		//	expErr:    nil,
-		//},
-		//{
-		//	name: "should not be able to send where amt + fee < balance",
-		//	txParams: msg_params.TxParams{
-		//		PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-		//		GasLimit:      defaultTxParams.GasLimit,
-		//		GasAdjustment: defaultTxParams.GasAdjustment,
-		//		GasPrice:      defaultTxParams.GasPrice,
-		//	},
-		//	recipient: repoCommon.RandKeyInfo(),
-		//	amt:       defaultPrefunded,
-		//	prefunded: defaultPrefunded,
-		//	expErr:    fmt.Errorf("insufficient funds"),
-		//},
+		{
+			name: "should be able to send where amt + fee >= balance",
+			txParams: msg_params.TxParams{
+				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
+				GasLimit:      defaultTxParams.GasLimit,
+				GasAdjustment: defaultTxParams.GasAdjustment,
+				GasPrice:      defaultTxParams.GasPrice,
+			},
+			recipient: repoCommon.RandKeyInfo(),
+			amt:       defaultTestAmt,
+			prefunded: defaultPrefunded,
+			expErr:    nil,
+		},
+		{
+			name: "should not be able to send where amt + fee < balance",
+			txParams: msg_params.TxParams{
+				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
+				GasLimit:      defaultTxParams.GasLimit,
+				GasAdjustment: defaultTxParams.GasAdjustment,
+				GasPrice:      defaultTxParams.GasPrice,
+			},
+			recipient: repoCommon.RandKeyInfo(),
+			amt:       defaultPrefunded,
+			prefunded: defaultPrefunded,
+			expErr:    fmt.Errorf("insufficient funds"),
+		},
 		{
 			name: "should not be able to send with insufficient gas limit",
 			txParams: msg_params.TxParams{
