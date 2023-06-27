@@ -1,11 +1,14 @@
 package common
 
 import (
+	"fmt"
 	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"github.com/LampardNguyen234/astra-go-sdk/client"
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
 	"github.com/LampardNguyen234/astra-go-sdk/common"
 	"github.com/LampardNguyen234/astra-integration-test/common/logger"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type ITestSuite interface {
@@ -42,12 +45,14 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 	if amount == 0 {
 		return
 	}
+
+	amt := common.Float64ToBigInt(amount)
 	resp, err := c.CosmosClient.TxSend(msg_params.TxSendRequestParams{
 		TxParams: msg_params.TxParams{
 			PrivateKey: c.GetMasterKey(),
 		},
 		ToAddr: recipient,
-		Amount: common.Float64ToBigInt(amount),
+		Amount: amt,
 	})
 	if err != nil {
 		c.Log.Panicf("failed to fund account %v: %v", recipient, err)
@@ -55,7 +60,7 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 
 	c.TxShouldPass(resp.TxHash)
 
-	c.BalanceCheckFloat64(recipient, amount, OpGTE)
+	c.BalanceCompare(recipient, sdk.NewIntFromBigInt(amt), assert.OpGTE)
 }
 
 func (c *TestClient) ClawBack(privateKey string) {
@@ -85,4 +90,13 @@ func (c *TestClient) ClawBack(privateKey string) {
 		}
 	}
 	c.Log.Debugf("succeeded to perform refunding for %v", ki.CosmosAddress)
+}
+
+func (c *TestClient) Start() {
+	c.Log.Infof("==================== STARTED ====================")
+}
+
+func (c *TestClient) Finished() {
+	c.Log.Infof("==================== FINISHED ====================")
+	fmt.Println("")
 }

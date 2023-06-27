@@ -32,7 +32,30 @@ func (c *TestClient) TxShouldPass(txHash string) {
 	}
 }
 
-func (c *TestClient) TxShouldFailedWithError(txHash string, errMsg string) {
+func (c *TestClient) TxShouldFail(txHash string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(2 * time.Second)
+			resp, _ := c.TxByHash(txHash)
+			if resp != nil {
+				if resp.Height == 0 {
+					continue
+				}
+				if resp.Code == 0 {
+					c.Log.Panicf("expect tx %v to fail", txHash)
+				}
+				return
+			}
+		}
+	}
+}
+
+func (c *TestClient) TxShouldFailWithError(txHash string, errMsg string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	for {

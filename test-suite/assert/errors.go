@@ -1,4 +1,4 @@
-package common
+package assert
 
 import (
 	"fmt"
@@ -33,6 +33,12 @@ func NoError(err error, msgAndArgs ...interface{}) {
 func True(in bool, msgAndArgs ...interface{}) {
 	if !in {
 		log.Panicf("expect true, got false\n%v", parseMsgAndArgs(msgAndArgs))
+	}
+}
+
+func False(in bool, msgAndArgs ...interface{}) {
+	if in {
+		log.Panicf("expect false, got true\n%v", parseMsgAndArgs(msgAndArgs))
 	}
 }
 

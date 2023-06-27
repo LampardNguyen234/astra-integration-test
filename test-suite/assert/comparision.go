@@ -1,7 +1,8 @@
-package common
+package assert
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"log"
 )
 
 type CompareOP uint8
@@ -87,7 +88,7 @@ func (op CompareOP) CompareSdkDec(a, b sdk.Dec) bool {
 }
 
 // Compare performs op.Compare(a, b).
-func (c *TestClient) Compare(a, b interface{}, op CompareOP) {
+func Compare(a, b interface{}, op CompareOP) {
 	ret := false
 	if _, ok := a.(sdk.Int); ok {
 		ret = op.CompareSdkInt(a.(sdk.Int), b.(sdk.Int))
@@ -103,7 +104,6 @@ func (c *TestClient) Compare(a, b interface{}, op CompareOP) {
 	}
 
 	if !ret {
-		c.Log.Panicf("%v is not %v %v", a, op.String(), b)
+		log.Panicf("%v is not %v %v", a, op.String(), b)
 	}
-
 }

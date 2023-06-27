@@ -9,7 +9,7 @@ func (c *TestClient) WaitForBlock(numBlocks int64) {
 	if numBlocks > 200 {
 		c.Log.Panic("too many blocks, maximum supported: 200")
 	}
-	if numBlocks == 0 {
+	if numBlocks <= 0 {
 		return
 	}
 
@@ -30,7 +30,7 @@ func (c *TestClient) WaitUntilBlock(blk int64) {
 		case <-ctx.Done():
 			c.Log.Panicf("failed to wait until block %v: TIMED-OUT", blk)
 		default:
-			time.Sleep(1 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 			resp, _ := c.LatestBlockHeight()
 			if resp != nil {
 				if resp.Int64() >= blk {

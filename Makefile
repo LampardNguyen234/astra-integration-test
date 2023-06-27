@@ -4,4 +4,4 @@ run:
 build-app:
 	go build -o astra-test
 clean:
-	rm -f as && go clean --modcache && go mod tidy
+	rm -f astra-test && go clean --modcache && go mod tidy

@@ -1,7 +1,7 @@
 {
   "Logger": {
     "LogPath": "",
-    "Level": 0,
+    "Level": 1,
     "Color": false
   },
   "TestSuite": {
@@ -11,7 +11,7 @@
       "ChainID": "astra_11115-1"
     },
     "SendSuite": {
-      "Enabled": false,
+      "Enabled": true,
       "MasterKey": "359cff423c10c4452ca407e0a3ec3bb5c77709e4f56b2b1cf2855c8556939c09"
     },
     "MintSuite": {

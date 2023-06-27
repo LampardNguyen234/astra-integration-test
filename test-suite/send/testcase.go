@@ -5,7 +5,7 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
 	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -30,7 +30,7 @@ func (s *SendSuite) runTestCase(tc sendTestCase) {
 
 	// balance before sending
 	rcptBal, err := s.CosmosClient.Balance(tc.recipient.CosmosAddress)
-	common.NoError(err, msg)
+	assert.NoError(err, msg)
 
 	resp, err := s.CosmosClient.BuildAndSendTx(
 		tc.txParams,
@@ -42,17 +42,17 @@ func (s *SendSuite) runTestCase(tc sendTestCase) {
 	)
 	if tc.expErr != nil {
 		if err == nil {
-			s.TxShouldFailedWithError(resp.TxHash, tc.expErr.Error())
+			s.TxShouldFailWithError(resp.TxHash, tc.expErr.Error())
 		} else {
-			common.ErrorContains(err, tc.expErr.Error(), msg)
+			assert.ErrorContains(err, tc.expErr.Error(), msg)
 		}
 		s.Log.Debugf("%v PASSED", msg)
 	} else {
-		common.NoError(err, msg)
+		assert.NoError(err, msg)
 		s.TxShouldPass(resp.TxHash)
-		s.BalanceCheckFloat64(tc.recipient.CosmosAddress,
-			sdkCommon.BigIntToFloat64(rcptBal.Total.BigInt())+tc.amt,
-			common.OpEQ,
+		s.BalanceCompare(tc.recipient.CosmosAddress,
+			rcptBal.Total.Add(sdk.NewIntFromBigInt(sdkCommon.Float64ToBigInt(tc.amt))),
+			assert.OpEQ,
 		)
 		s.Log.Debugf("%v PASSED", msg)
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func (s *SendSuite) RunTest() {
-	s.Log.Debugf("START")
+	s.Start()
 	defaultTxParams := msg_params.TxParams{
 		GasLimit:      1000000,
 		GasAdjustment: 1,
@@ -76,5 +76,5 @@ func (s *SendSuite) RunTest() {
 		s.runTestCase(tc)
 	}
 
-	s.Log.Debugf("FINISHED")
+	s.Finished()
 }

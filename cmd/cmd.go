@@ -49,6 +49,7 @@ func Run(args []string) error {
 			}
 
 			log := logger.NewZeroLogger(cfg.Logger.LogPath)
+			log.SetLogLevel(logger.LogLevel(cfg.Logger.Level))
 
 			mainApp, err := testSuite.NewTestSuite(cfg.TestSuite, log)
 			if err != nil {
