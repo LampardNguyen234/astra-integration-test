@@ -12,7 +12,11 @@
 		},
 		"SendSuite": {
 			"Enabled": true,
-			"MasterKey": "SEND_SUITE_MASTER_KEY"
+			"MasterKey": ""
+		},
+		"MintSuite": {
+			"Enabled": true,
+			"NumTests": 10
 		}
 	}
 }
