@@ -2,31 +2,9 @@ package common
 
 import (
 	"context"
-	"github.com/LampardNguyen234/astra-go-sdk/common"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"strings"
 	"time"
 )
-
-func (c *TestClient) WaitUntilBlock(blk int64) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	for {
-		select {
-		case <-ctx.Done():
-			c.Log.Panicf("failed to wait until block %v: TIMED-OUT", blk)
-		default:
-			time.Sleep(2 * time.Second)
-			resp, _ := c.LatestBlockHeight(ctx)
-			if resp != nil {
-				if resp.Int64() >= blk {
-					return
-				}
-			}
-		}
-	}
-}
 
 func (c *TestClient) TxShouldPass(txHash string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -73,27 +51,6 @@ func (c *TestClient) TxShouldFailedWithError(txHash string, errMsg string) {
 				} else if !strings.Contains(resp.RawLog, errMsg) {
 					c.Log.Panicf("expect tx %v to fail with error %v, got %v", errMsg, resp.RawLog)
 				} else {
-					return
-				}
-			}
-		}
-	}
-}
-
-func (c *TestClient) WaitForBalanceUpdated(addr string, expectedAmt float64) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
-	amt := common.Float64ToBigInt(expectedAmt)
-	for {
-		select {
-		case <-ctx.Done():
-			c.Log.Panicf("failed to check balance of addr %v: TIMED-OUT", addr)
-		default:
-			time.Sleep(2 * time.Second)
-			balance, _ := c.Balance(addr)
-			if balance != nil {
-				if balance.Total.GTE(sdk.NewIntFromBigInt(amt)) {
 					return
 				}
 			}

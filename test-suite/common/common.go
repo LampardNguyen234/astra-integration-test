@@ -1,45 +1,42 @@
 package common
 
-type CompareOP uint8
-
-const (
-	OpLT CompareOP = iota
-	OpLTE
-	OpEQ
-	OpGTE
-	OpGT
+import (
+	"context"
+	"time"
 )
 
-func (op CompareOP) String() string {
-	switch op {
-	case OpLT:
-		return "less than"
-	case OpLTE:
-		return "less than or equal to"
-	case OpEQ:
-		return "equal to"
-	case OpGTE:
-		return "greater than or equal to"
-	case OpGT:
-		return "greater than"
-	default:
-		return ""
+func (c *TestClient) WaitForBlock(numBlocks int64) {
+	if numBlocks > 200 {
+		c.Log.Panic("too many blocks, maximum supported: 200")
 	}
+	if numBlocks == 0 {
+		return
+	}
+
+	current, err := c.LatestBlockHeight()
+	if err != nil {
+		c.Log.Panic(err.Error())
+	}
+
+	c.WaitUntilBlock(current.Int64() + numBlocks)
 }
 
-func (op CompareOP) Compare(a, b float64) bool {
-	switch op {
-	case OpLT:
-		return a < b
-	case OpLTE:
-		return a <= b
-	case OpEQ:
-		return a == b
-	case OpGTE:
-		return a >= b
-	case OpGT:
-		return a > b
-	default:
-		return false
+func (c *TestClient) WaitUntilBlock(blk int64) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			c.Log.Panicf("failed to wait until block %v: TIMED-OUT", blk)
+		default:
+			time.Sleep(1 * time.Second)
+			resp, _ := c.LatestBlockHeight()
+			if resp != nil {
+				if resp.Int64() >= blk {
+					return
+				}
+			}
+		}
 	}
 }

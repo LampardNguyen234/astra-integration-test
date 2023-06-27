@@ -48,9 +48,9 @@ func (s *SendSuite) runTestCase(tc sendTestCase) {
 		}
 		s.Log.Debugf("%v PASSED", msg)
 	} else {
-		common.NoError(err)
+		common.NoError(err, msg)
 		s.TxShouldPass(resp.TxHash)
-		s.BalanceCheck(tc.recipient.CosmosAddress,
+		s.BalanceCheckFloat64(tc.recipient.CosmosAddress,
 			sdkCommon.BigIntToFloat64(rcptBal.Total.BigInt())+tc.amt,
 			common.OpEQ,
 		)

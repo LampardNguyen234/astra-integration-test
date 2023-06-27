@@ -55,7 +55,7 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 
 	c.TxShouldPass(resp.TxHash)
 
-	c.BalanceCheck(recipient, amount, OpGTE)
+	c.BalanceCheckFloat64(recipient, amount, OpGTE)
 }
 
 func (c *TestClient) ClawBack(privateKey string) {

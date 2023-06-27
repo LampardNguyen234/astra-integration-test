@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"github.com/LampardNguyen234/astra-go-sdk/client"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/mint"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/send"
 )
 
 type SuiteConfig struct {
 	MasterKey string                    `json:"MasterKey,omitempty"`
-	SdkConfig client.CosmosClientConfig `json:"SdkConfig" json:"SdkConfig"`
-	SendSuite *send.SuiteConfig         `json:"SendSuite" json:"SendSuite"`
+	SdkConfig client.CosmosClientConfig `json:"SdkConfig"`
+	SendSuite *send.SuiteConfig         `json:"SendSuite"`
+	MintSuite *mint.SuiteConfig         `json:"MintSuite"`
 }
 
 func (cfg *SuiteConfig) IsValid() (bool, error) {
@@ -32,9 +34,11 @@ func (cfg *SuiteConfig) IsValid() (bool, error) {
 
 func DefaultConfig() SuiteConfig {
 	ss := send.DefaultConfig()
+	ms := mint.DefaultConfig()
 	return SuiteConfig{
 		MasterKey: "",
 		SdkConfig: client.DefaultTestnetConfig(),
 		SendSuite: &ss,
+		MintSuite: &ms,
 	}
 }

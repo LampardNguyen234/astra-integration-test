@@ -5,6 +5,7 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/client"
 	"github.com/LampardNguyen234/astra-integration-test/common/logger"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/mint"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/send"
 )
 
@@ -34,6 +35,13 @@ func NewTestSuite(cfg SuiteConfig, log logger.Logger) (*TestSuite, error) {
 			return nil, fmt.Errorf("invalid `send`: %v", err)
 		}
 		suites = append(suites, ss)
+	}
+	if cfg.MintSuite.Enabled {
+		ms, err := mint.NewMintSuite(cfg.MintSuite, c, log)
+		if err != nil {
+			return nil, fmt.Errorf("invalid `mint`: %v", err)
+		}
+		suites = append(suites, ms)
 	}
 
 	return &TestSuite{
