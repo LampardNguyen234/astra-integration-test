@@ -25,7 +25,7 @@ func (c *TestClient) TxShouldPass(txHash string) {
 					c.WaitUntilBlock(resp.Height + 1)
 					return
 				} else {
-					c.Log.Panicf("tx %v failed with code: %v, error: %v", resp.Code, resp.RawLog)
+					c.Log.Panicf("tx %v failed with code: %v, error: %v", resp.TxHash, resp.Code, resp.RawLog)
 				}
 			}
 		}

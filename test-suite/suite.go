@@ -7,6 +7,7 @@ import (
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/mint"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/send"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/vesting"
 )
 
 type TestSuite struct {
@@ -42,6 +43,16 @@ func NewTestSuite(cfg SuiteConfig, log logger.Logger) (*TestSuite, error) {
 			return nil, fmt.Errorf("invalid `mint`: %v", err)
 		}
 		suites = append(suites, ms)
+	}
+	if cfg.VestingSuite.Enabled {
+		if cfg.MasterKey != "" {
+			cfg.VestingSuite.MasterKey = cfg.MasterKey
+		}
+		ss, err := vesting.NewVestingSuite(cfg.VestingSuite, c, log)
+		if err != nil {
+			return nil, fmt.Errorf("invalid `vesting`: %v", err)
+		}
+		suites = append(suites, ss)
 	}
 
 	return &TestSuite{

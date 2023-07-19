@@ -62,3 +62,16 @@ func RandKeyInfo() *account.KeyInfo {
 
 	return ret
 }
+
+// RandKeyInfos returns a list of random key infos.
+func RandKeyInfos(n int) []*account.KeyInfo {
+	if n <= 0 {
+		return nil
+	}
+	ret := make([]*account.KeyInfo, 0)
+	for len(ret) < n {
+		ret = append(ret, RandKeyInfo())
+	}
+
+	return ret
+}

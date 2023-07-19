@@ -1,4 +1,4 @@
-package send
+package vesting
 
 import (
 	"fmt"
@@ -20,6 +20,7 @@ func (cfg *SuiteConfig) IsValid() (bool, error) {
 			return false, fmt.Errorf("invalid `masterKey`: %v", err)
 		}
 	}
+
 	return true, nil
 }
 

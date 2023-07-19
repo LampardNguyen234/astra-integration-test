@@ -6,13 +6,15 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/client"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/mint"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/send"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/vesting"
 )
 
 type SuiteConfig struct {
-	MasterKey string                    `json:"MasterKey,omitempty"`
-	SdkConfig client.CosmosClientConfig `json:"SdkConfig"`
-	SendSuite *send.SuiteConfig         `json:"SendSuite"`
-	MintSuite *mint.SuiteConfig         `json:"MintSuite"`
+	MasterKey    string                    `json:"MasterKey,omitempty"`
+	SdkConfig    client.CosmosClientConfig `json:"SdkConfig"`
+	SendSuite    *send.SuiteConfig         `json:"SendSuite"`
+	MintSuite    *mint.SuiteConfig         `json:"MintSuite"`
+	VestingSuite *vesting.SuiteConfig      `json:"VestingSuite"`
 }
 
 func (cfg *SuiteConfig) IsValid() (bool, error) {
@@ -29,16 +31,22 @@ func (cfg *SuiteConfig) IsValid() (bool, error) {
 		return false, fmt.Errorf("invalid send config: %v", err)
 	}
 
+	if _, err := cfg.VestingSuite.IsValid(); err != nil {
+		return false, fmt.Errorf("invalid vesting config: %v", err)
+	}
+
 	return true, nil
 }
 
 func DefaultConfig() SuiteConfig {
 	ss := send.DefaultConfig()
 	ms := mint.DefaultConfig()
+	vs := vesting.DefaultConfig()
 	return SuiteConfig{
-		MasterKey: "",
-		SdkConfig: client.DefaultTestnetConfig(),
-		SendSuite: &ss,
-		MintSuite: &ms,
+		MasterKey:    "",
+		SdkConfig:    client.DefaultTestnetConfig(),
+		SendSuite:    &ss,
+		MintSuite:    &ms,
+		VestingSuite: &vs,
 	}
 }

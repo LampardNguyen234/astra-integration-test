@@ -17,7 +17,7 @@ type ITestSuite interface {
 	SetMasterKey(string)
 	GetMasterKey() string
 	FundAccount(recipient string, amount float64)
-	ClawBack(privateKey string)
+	Refund(privateKey string)
 }
 
 type TestClient struct {
@@ -63,15 +63,15 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 	c.BalanceCompare(recipient, sdk.NewIntFromBigInt(amt), assert.OpGTE)
 }
 
-func (c *TestClient) ClawBack(privateKey string) {
+func (c *TestClient) Refund(privateKey string) {
 	ki, _ := account.NewKeyInfoFromPrivateKey(privateKey)
 	balance, err := c.Balance(ki.CosmosAddress)
 	if err != nil {
 		c.Log.Errorf("failed to get balance of refunded account %v: %v", ki.CosmosAddress, err)
 		return
 	}
-	tmp := common.BigIntToFloat64(balance.Total.BigInt())
-	if tmp > 0.02 {
+	tmp := common.BigIntToFloat64(balance.Unlocked.BigInt())
+	if tmp > 0.03 {
 		_, err = c.TxSend(
 			msg_params.TxSendRequestParams{
 				TxParams: msg_params.TxParams{
@@ -81,7 +81,7 @@ func (c *TestClient) ClawBack(privateKey string) {
 					GasPrice:      msg_params.DefaultTxParams().GasPrice,
 				},
 				ToAddr: account.MustNewPrivateKeyFromString(c.masterKey).AccAddress().String(),
-				Amount: common.Float64ToBigInt(tmp - 0.02),
+				Amount: common.Float64ToBigInt(tmp - 0.03),
 			},
 		)
 		if err != nil {
@@ -89,7 +89,6 @@ func (c *TestClient) ClawBack(privateKey string) {
 			return
 		}
 	}
-	c.Log.Debugf("succeeded to perform refunding for %v", ki.CosmosAddress)
 }
 
 func (c *TestClient) Start() {

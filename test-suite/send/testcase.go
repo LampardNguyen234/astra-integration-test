@@ -26,7 +26,7 @@ func (s *SendSuite) runTestCase(tc sendTestCase) {
 	if tc.mall != nil {
 		tc.mall()
 	}
-	defer s.ClawBack(tc.txParams.PrivateKey)
+	defer s.Refund(tc.txParams.PrivateKey)
 
 	// balance before sending
 	rcptBal, err := s.CosmosClient.Balance(tc.recipient.CosmosAddress)

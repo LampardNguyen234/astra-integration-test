@@ -15,8 +15,11 @@
 			"MasterKey": ""
 		},
 		"MintSuite": {
+			"Enabled": true
+		},
+		"VestingSuite": {
 			"Enabled": true,
-			"NumTests": 10
+			"MasterKey": ""
 		}
 	}
 }
