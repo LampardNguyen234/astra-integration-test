@@ -21,5 +21,5 @@ func NewSendSuite(cfg *SuiteConfig, cc *client.CosmosClient, log logger.Logger) 
 }
 
 func (s *SendSuite) Name() string {
-	return "send"
+	return "SendModule"
 }

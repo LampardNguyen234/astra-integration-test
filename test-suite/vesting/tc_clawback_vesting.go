@@ -1,33 +1,37 @@
 package vesting
 
 import (
-	"fmt"
 	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
 	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
 	"github.com/LampardNguyen234/astra-integration-test/common"
+	. "github.com/LampardNguyen234/astra-integration-test/framework"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	vestingTypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/evmos/evmos/v6/x/vesting/types"
+	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"time"
 )
 
 type clawBackVestingTestCase struct {
-	name             string
 	txParams         msg_params.TxParams
 	funder           *account.KeyInfo
+	operator         *account.KeyInfo
 	dest             string
 	vestingAccount   *account.KeyInfo
 	expClawBackedAmt sdk.Int
 	expErr           error
-	before           func()
-	after            func()
 }
 
 func (tc clawBackVestingTestCase) Msg() sdk.Msg {
 	var msg sdk.Msg
+	dest := tc.dest
+	if dest == "" {
+		dest = tc.funder.CosmosAddress
+	}
 	msg = types.NewMsgClawback(
 		account.MustParseCosmosAddress(tc.funder.CosmosAddress),
 		account.MustParseCosmosAddress(tc.vestingAccount.CosmosAddress),
@@ -46,16 +50,27 @@ func (tc clawBackVestingTestCase) Msg() sdk.Msg {
 	return msg
 }
 
-func (tc clawBackVestingTestCase) Name() string {
-	return fmt.Sprintf("[tc: %v]", tc.name)
-}
-
-func (s *VestingSuite) runClawBackVestingTest() {
-
-	//operators := common.RandKeyInfos(10)
-	funders := common.RandKeyInfos(10)
-	vestingAccounts := common.RandKeyInfos(10)
+func (s *VestingSuite) testClawBackVesting() ITestNode {
+	RegisterFailHandler(ginkgo.Fail)
+	var funder, operator, vestingAccount *account.KeyInfo
+	var txParams msg_params.TxParams
 	defaultDest := account.MustNewPrivateKeyFromString(s.GetMasterKey()).AccAddress().String()
+
+	defaultBeforeEach := BeforeEach(func() {
+		funder = common.RandKeyInfo()
+		vestingAccount = common.RandKeyInfo()
+		operator = common.RandKeyInfo()
+		txParams = msg_params.TxParams{
+			PrivateKey: funder.PrivateKey,
+		}
+		_ = operator
+
+		s.FundAccount(funder.CosmosAddress, 1)
+	})
+	defaultAfterEach := AfterEach(func() {
+		s.Refund(funder.PrivateKey)
+		s.Refund(operator.PrivateKey)
+	})
 
 	createVestingFunc := func(funder, recipient *account.KeyInfo,
 		start time.Time,
@@ -80,179 +95,148 @@ func (s *VestingSuite) runClawBackVestingTest() {
 		s.TxShouldPass(tx.TxHash)
 	}
 
-	tcs := []clawBackVestingTestCase{
-		{
-			name: "when coins are unvested but not locked - should claw back unvested",
-			txParams: msg_params.TxParams{
-				PrivateKey: funders[0].PrivateKey,
-			},
-			funder:           funders[0],
-			dest:             defaultDest,
-			vestingAccount:   vestingAccounts[0],
-			expClawBackedAmt: sdk.NewIntWithDecimal(1, 15),
-			before: func() {
-				s.FundAccount(funders[0].CosmosAddress, 1)
-				createVestingFunc(
-					funders[0],
-					vestingAccounts[0],
-					time.Now(),
-					vestingTypes.Periods{
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+	root := Describe("clawback vesting",
+		When("coins are unvested",
+			defaultBeforeEach,
+			defaultAfterEach,
+			Context("coins are unlocked",
+				Before(func() {
+					createVestingFunc(
+						funder,
+						vestingAccount,
+						time.Now(),
+						vestingTypes.Periods{
+							{
+								Length: 1000,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
 						},
-					},
-					nil,
-				)
-			},
-			after: func() {
-				s.Refund(funders[0].PrivateKey)
-				s.Refund(vestingAccounts[0].PrivateKey)
-			},
-			expErr: nil,
-		},
-		{
-			name: "when coins are partially vested - should claw back unvested only",
-			txParams: msg_params.TxParams{
-				PrivateKey: funders[1].PrivateKey,
-			},
-			funder:           funders[1],
-			dest:             defaultDest,
-			vestingAccount:   vestingAccounts[1],
-			expClawBackedAmt: sdk.NewIntWithDecimal(1, 15),
-			before: func() {
-				s.FundAccount(funders[1].CosmosAddress, 1)
-				createVestingFunc(
-					funders[1],
-					vestingAccounts[1],
-					time.Unix(time.Now().Unix()-1500, 0),
-					vestingTypes.Periods{
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
-						},
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
-						},
-					},
-					nil,
-				)
-			},
-			after: func() {
-				s.Refund(funders[1].PrivateKey)
-				s.Refund(vestingAccounts[1].PrivateKey)
-			},
-			expErr: nil,
-		},
-		{
-			name: "when coins are unvested and locked - should claw back all",
-			txParams: msg_params.TxParams{
-				PrivateKey: funders[2].PrivateKey,
-			},
-			funder:           funders[2],
-			dest:             defaultDest,
-			vestingAccount:   vestingAccounts[2],
-			expClawBackedAmt: sdk.NewIntWithDecimal(1, 15),
-			before: func() {
-				s.FundAccount(funders[2].CosmosAddress, 1)
-				createVestingFunc(
-					funders[2],
-					vestingAccounts[2],
-					time.Now(),
-					vestingTypes.Periods{
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
-						},
-					},
-					vestingTypes.Periods{
-						{
-							Length: 100,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
-						},
-					},
-				)
-			},
-			after: func() {
-				s.Refund(funders[2].PrivateKey)
-				s.Refund(vestingAccounts[2].PrivateKey)
-			},
-			expErr: nil,
-		},
-		{
-			name: "when coins are vested and locked - should claw back unvested only",
-			txParams: msg_params.TxParams{
-				PrivateKey: funders[3].PrivateKey,
-			},
-			funder:           funders[3],
-			dest:             defaultDest,
-			vestingAccount:   vestingAccounts[3],
-			expClawBackedAmt: sdk.NewIntWithDecimal(2, 15),
-			before: func() {
-				s.FundAccount(funders[3].CosmosAddress, 1)
-				createVestingFunc(
-					funders[3],
-					vestingAccounts[3],
-					time.Unix(time.Now().Unix()-1500, 0),
-					vestingTypes.Periods{
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(2, 15))),
-						},
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(2, 15))),
-						},
-					},
-					vestingTypes.Periods{
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
-						},
-						{
-							Length: 1000,
-							Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(3, 15))),
-						},
-					},
-				)
-			},
-			after: func() {
-				s.Refund(funders[3].PrivateKey)
-				s.Refund(vestingAccounts[3].PrivateKey)
-			},
-			expErr: nil,
-		},
-		//{
-		//	name: "should be able to claw back with MsgExec",
-		//},
-		//{
-		//	name: "should not be able to claw back on behalf of other",
-		//},
-	}
+						nil,
+					)
+				}),
+				It("should clawback all", func() {
+					s.processClawBackVestingTestCase(clawBackVestingTestCase{
+						txParams:         txParams,
+						funder:           funder,
+						dest:             defaultDest,
+						vestingAccount:   vestingAccount,
+						expClawBackedAmt: sdk.NewIntWithDecimal(1, 15),
+						expErr:           nil,
+					})
+				}),
+			),
 
-	for _, tc := range tcs {
-		s.processClawBackVestingTestCase(tc)
-	}
+			Context("coins are locked",
+				Before(func() {
+					createVestingFunc(
+						funder,
+						vestingAccount,
+						time.Now(),
+						vestingTypes.Periods{
+							{
+								Length: 1000,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+						vestingTypes.Periods{
+							{
+								Length: 100,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+					)
+				}),
+				It("should clawback all", func() {
+					s.processClawBackVestingTestCase(clawBackVestingTestCase{
+						txParams:         txParams,
+						funder:           funder,
+						dest:             defaultDest,
+						vestingAccount:   vestingAccount,
+						expClawBackedAmt: sdk.NewIntWithDecimal(1, 15),
+						expErr:           nil,
+					})
+				}),
+			),
+		),
 
-	s.Log.Infof("CLAWBACK VESTING PASS")
+		When("coins are vested",
+			Context("coins are locked",
+				BeforeEach(func() {
+					defaultBeforeEach()
+					createVestingFunc(
+						funder,
+						vestingAccount,
+						time.Unix(time.Now().Unix()-10, 0),
+						vestingTypes.Periods{
+							{
+								Length: 1,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+						vestingTypes.Periods{
+							{
+								Length: 100,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+					)
+				}),
+				defaultAfterEach,
+				It("should clawback nothing", func() {
+					s.processClawBackVestingTestCase(clawBackVestingTestCase{
+						txParams:         txParams,
+						funder:           funder,
+						dest:             defaultDest,
+						vestingAccount:   vestingAccount,
+						expClawBackedAmt: sdk.ZeroInt(),
+						expErr:           nil,
+					})
+				}),
+			),
+			Context("coins are unlocked",
+				BeforeEach(func() {
+					defaultBeforeEach()
+					createVestingFunc(
+						funder,
+						vestingAccount,
+						time.Unix(time.Now().Unix()-10, 0),
+						vestingTypes.Periods{
+							{
+								Length: 1,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+						vestingTypes.Periods{
+							{
+								Length: 1,
+								Amount: sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sdk.NewIntWithDecimal(1, 15))),
+							},
+						},
+					)
+				}),
+				defaultAfterEach,
+				It("should clawback nothing", func() {
+					s.processClawBackVestingTestCase(clawBackVestingTestCase{
+						txParams:         txParams,
+						funder:           funder,
+						dest:             defaultDest,
+						vestingAccount:   vestingAccount,
+						expClawBackedAmt: sdk.ZeroInt(),
+						expErr:           nil,
+					})
+				}),
+			),
+		),
+	)
+
+	return root
 }
 
 func (s *VestingSuite) processClawBackVestingTestCase(tc clawBackVestingTestCase) {
-	msg := tc.Name()
-	if tc.before != nil {
-		tc.before()
-	}
-	defer func() {
-		if tc.after != nil {
-			tc.after()
-		}
-	}()
-
 	oldVestingBalance, err := s.GetVestingBalance(tc.vestingAccount.CosmosAddress)
-	assert.NoError(err)
+	Expect(err).To(BeNil())
 	oldDestBalance, err := s.Balance(tc.dest)
-	assert.NoError(err)
+	Expect(err).To(BeNil())
 
 	tc.txParams.GasAdjustment = 1.5
 	resp, err := s.BuildAndSendTx(
@@ -263,30 +247,28 @@ func (s *VestingSuite) processClawBackVestingTestCase(tc clawBackVestingTestCase
 		if err == nil {
 			s.TxShouldFailWithError(resp.TxHash, tc.expErr.Error())
 		} else {
-			assert.ErrorContains(err, tc.expErr.Error(), msg)
+			Expect(err.Error()).To(ContainSubstring(tc.expErr.Error()))
 		}
-		s.Log.Debugf("%v PASSED", msg)
 	} else {
-		assert.NoError(err, msg)
+		Expect(err).To(BeNil())
 		s.TxShouldPass(resp.TxHash)
 
 		newVestingBalance, err := s.GetVestingBalance(tc.vestingAccount.CosmosAddress)
-		assert.NoError(err, msg)
+		Expect(err).To(BeNil())
 		newDestBalance, err := s.Balance(tc.dest)
-		assert.NoError(err, msg)
+		Expect(err).To(BeNil())
 
 		// sanity checks
-		assert.Equal(newVestingBalance.Unvested.AmountOf(sdkCommon.BaseDenom),
-			sdk.ZeroInt(), msg)
-		assert.Equal(newVestingBalance.Vested.AmountOf(sdkCommon.BaseDenom),
-			oldVestingBalance.Vested.AmountOf(sdkCommon.BaseDenom), msg)
-		assert.Equal(newVestingBalance.Locked.AmountOf(sdkCommon.BaseDenom),
-			sdk.ZeroInt(), msg)
-		assert.Equal(newVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom),
-			oldVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom), msg)
-		assert.Equal(oldVestingBalance.Total.Sub(newVestingBalance.Total).AmountOf(sdkCommon.BaseDenom), tc.expClawBackedAmt, msg)
-		assert.Equal(newDestBalance.Total.Sub(oldDestBalance.Total), tc.expClawBackedAmt, msg)
-
-		s.Log.Debugf("%v PASSED", msg)
+		Expect(newVestingBalance.Unvested.AmountOf(sdkCommon.BaseDenom)).To(Equal(
+			sdk.ZeroInt()))
+		Expect(newVestingBalance.Vested.AmountOf(sdkCommon.BaseDenom)).To(Equal(
+			oldVestingBalance.Vested.AmountOf(sdkCommon.BaseDenom)))
+		Expect(newVestingBalance.Locked.AmountOf(sdkCommon.BaseDenom)).To(Equal(
+			sdk.ZeroInt()))
+		Expect(newVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom)).To(Equal(
+			oldVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom)))
+		Expect(oldVestingBalance.Total.Sub(newVestingBalance.Total).AmountOf(sdkCommon.BaseDenom)).To(Equal(
+			tc.expClawBackedAmt))
+		Expect(newDestBalance.Total.Sub(oldDestBalance.Total).String()).To(Equal(tc.expClawBackedAmt.String()))
 	}
 }

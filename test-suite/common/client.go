@@ -60,7 +60,7 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 
 	c.TxShouldPass(resp.TxHash)
 
-	c.BalanceCompare(recipient, sdk.NewIntFromBigInt(amt), assert.OpGTE)
+	c.ExpectBalance(recipient, sdk.NewIntFromBigInt(amt), assert.OpGTE)
 }
 
 func (c *TestClient) Refund(privateKey string) {

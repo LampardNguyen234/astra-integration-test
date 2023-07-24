@@ -25,7 +25,7 @@ func NewVestingSuite(cfg *SuiteConfig, cc *client.CosmosClient, log logger.Logge
 }
 
 func (s *VestingSuite) Name() string {
-	return "vesting"
+	return "VestingModule"
 }
 
 func (s *VestingSuite) FundVesting(recipient string, amount float64, duration int64) {

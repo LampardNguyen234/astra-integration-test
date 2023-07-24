@@ -2,79 +2,136 @@ package send
 
 import (
 	"fmt"
+	"github.com/LampardNguyen234/astra-go-sdk/account"
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
+	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
 	repoCommon "github.com/LampardNguyen234/astra-integration-test/common"
+	. "github.com/LampardNguyen234/astra-integration-test/framework"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 func (s *SendSuite) RunTest() {
 	s.Start()
-	defaultTxParams := msg_params.TxParams{
-		GasLimit:      1000000,
-		GasAdjustment: 1,
-		GasPrice:      "100000000000aastra",
-	}
 
-	defaultTestAmt := 0.15
-	defaultPrefunded := 0.3
-
-	tcs := []sendTestCase{
-		{
-			name: "should be able to send where amt + fee >= balance",
-			txParams: msg_params.TxParams{
-				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-				GasLimit:      defaultTxParams.GasLimit,
-				GasAdjustment: defaultTxParams.GasAdjustment,
-				GasPrice:      defaultTxParams.GasPrice,
-			},
-			recipient: repoCommon.RandKeyInfo(),
-			amt:       defaultTestAmt,
-			prefunded: defaultPrefunded,
-			expErr:    nil,
-		},
-		{
-			name: "should not be able to send where amt + fee < balance",
-			txParams: msg_params.TxParams{
-				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-				GasLimit:      defaultTxParams.GasLimit,
-				GasAdjustment: defaultTxParams.GasAdjustment,
-				GasPrice:      defaultTxParams.GasPrice,
-			},
-			recipient: repoCommon.RandKeyInfo(),
-			amt:       defaultPrefunded,
-			prefunded: defaultPrefunded,
-			expErr:    fmt.Errorf("insufficient funds"),
-		},
-		{
-			name: "should not be able to send with insufficient gas limit",
-			txParams: msg_params.TxParams{
-				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-				GasLimit:      10000,
-				GasAdjustment: defaultTxParams.GasAdjustment,
-				GasPrice:      "100000000000aastra",
-			},
-			recipient: repoCommon.RandKeyInfo(),
-			amt:       defaultTestAmt,
-			prefunded: defaultPrefunded,
-			expErr:    fmt.Errorf("out of gas"),
-		},
-		{
-			name: "should not be able to send with gasPrice = 0",
-			txParams: msg_params.TxParams{
-				PrivateKey:    repoCommon.RandKeyInfo().PrivateKey,
-				GasLimit:      1000000,
-				GasAdjustment: defaultTxParams.GasAdjustment,
-				GasPrice:      "0aastra",
-			},
-			recipient: repoCommon.RandKeyInfo(),
-			amt:       defaultTestAmt,
-			prefunded: defaultPrefunded,
-			expErr:    fmt.Errorf("insufficient fee"),
-		},
-	}
-
-	for _, tc := range tcs {
-		s.runTestCase(tc)
-	}
+	tc := s.registerTests()
+	tc.Run()
+	tc.Report()
 
 	s.Finished()
+}
+
+func (s *SendSuite) registerTests() ITestNode {
+	RegisterFailHandler(ginkgo.Fail)
+
+	var from, to, operator *account.KeyInfo
+	var txParams msg_params.TxParams
+
+	defaultBeforeEach := BeforeEach(func() {
+		from = repoCommon.RandKeyInfo()
+		to = repoCommon.RandKeyInfo()
+		operator = repoCommon.RandKeyInfo()
+		txParams = msg_params.TxParams{
+			PrivateKey: from.PrivateKey,
+		}
+		_ = operator
+
+		s.FundAccount(from.CosmosAddress, 1)
+	})
+	defaultAfterEach := AfterEach(func() {
+		s.Refund(from.PrivateKey)
+		s.Refund(operator.PrivateKey)
+	})
+
+	root := Describe(fmt.Sprintf("%v", s.Name()),
+		Context(
+			"sufficient balance",
+			defaultBeforeEach,
+			defaultAfterEach,
+
+			It("should be able to send by self", func() {
+				oldRecipientBalance, err := s.CosmosClient.Balance(to.CosmosAddress)
+				Expect(err).To(BeNil())
+
+				sentAmt := sdk.NewIntWithDecimal(1, 17)
+				resp, err := s.CosmosClient.BuildAndSendTx(
+					txParams,
+					bankTypes.NewMsgSend(
+						account.MustParseCosmosAddress(from.CosmosAddress),
+						account.MustParseCosmosAddress(to.CosmosAddress),
+						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
+					),
+				)
+				Expect(err).To(BeNil())
+				s.TxShouldPass(resp.TxHash)
+
+				newRecipientBalance, err := s.CosmosClient.Balance(to.CosmosAddress)
+				Expect(err).To(BeNil())
+				Expect(newRecipientBalance.Total.Sub(oldRecipientBalance.Total)).To(Equal(
+					sentAmt,
+				))
+			}),
+		),
+
+		Context("insufficient balance",
+			defaultBeforeEach,
+			defaultAfterEach,
+
+			It("should not be able to send", func() {
+				sentAmt := sdk.NewIntWithDecimal(2, 18)
+				_, err := s.CosmosClient.BuildAndSendTx(
+					txParams,
+					bankTypes.NewMsgSend(
+						account.MustParseCosmosAddress(from.CosmosAddress),
+						account.MustParseCosmosAddress(to.CosmosAddress),
+						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
+					),
+				)
+				assert.ErrorContains(err, "insufficient funds")
+			}),
+		),
+
+		Context("invalid fee",
+			defaultBeforeEach,
+			defaultAfterEach,
+
+			It("should not be able to send with insufficient gas limit", func() {
+				sentAmt := sdk.NewIntWithDecimal(1, 17)
+				_, err := s.CosmosClient.BuildAndSendTx(
+					msg_params.TxParams{
+						PrivateKey: from.PrivateKey,
+						GasLimit:   10000,
+					},
+					bankTypes.NewMsgSend(
+						account.MustParseCosmosAddress(from.CosmosAddress),
+						account.MustParseCosmosAddress(to.CosmosAddress),
+						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
+					),
+				)
+				assert.ErrorContains(err, "out of gas")
+			}),
+
+			It("should not be able to send with gasPrice=0", func() {
+				sentAmt := sdk.NewIntWithDecimal(1, 17)
+				_, err := s.CosmosClient.BuildAndSendTx(
+					msg_params.TxParams{
+						PrivateKey: from.PrivateKey,
+						GasLimit:   1000000,
+						GasPrice:   "0aastra",
+					},
+					bankTypes.NewMsgSend(
+						account.MustParseCosmosAddress(from.CosmosAddress),
+						account.MustParseCosmosAddress(to.CosmosAddress),
+						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
+					),
+				)
+				assert.ErrorContains(err, "insufficient fee")
+			}),
+		),
+	)
+
+	return root
 }
