@@ -5,7 +5,6 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
 	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
 	"github.com/LampardNguyen234/astra-integration-test/common/logger"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
 	"time"
 )
@@ -44,6 +43,6 @@ func (s *VestingSuite) FundVesting(recipient string, amount float64, duration in
 		Amount:          sdkCommon.Float64ToBigInt(amount),
 		VestingLength:   10,
 	})
-	assert.NoError(err)
+	common.NoError(err)
 	s.TxShouldPass(resp.TxHash)
 }

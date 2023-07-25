@@ -1,8 +1,6 @@
-package assert
+package common
 
 import (
-	"bytes"
-	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"log"
 )
@@ -107,17 +105,5 @@ func Compare(a, b interface{}, op CompareOP) {
 
 	if !ret {
 		log.Panicf("%v is not %v %v", a, op.String(), b)
-	}
-}
-
-func Equal(a, b interface{}, msgAndArgs ...interface{}) {
-	if a == nil && b == nil {
-		return
-	}
-	jsbA, _ := json.Marshal(a)
-	jsbB, _ := json.Marshal(b)
-
-	if !bytes.Equal(jsbA, jsbB) {
-		log.Panicf("expect %v to be equal to %v\n%v", a, b, parseMsgAndArgs(msgAndArgs))
 	}
 }

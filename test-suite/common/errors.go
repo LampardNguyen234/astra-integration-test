@@ -1,4 +1,4 @@
-package assert
+package common
 
 import (
 	"fmt"

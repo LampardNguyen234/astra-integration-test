@@ -30,7 +30,7 @@ func (c *TestClient) WaitUntilBlock(blk int64) {
 		case <-ctx.Done():
 			c.Log.Panicf("failed to wait until block %v: TIMED-OUT", blk)
 		default:
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 			resp, _ := c.LatestBlockHeight()
 			if resp != nil {
 				if resp.Int64() >= blk {

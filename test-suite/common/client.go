@@ -7,8 +7,8 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/client/msg_params"
 	"github.com/LampardNguyen234/astra-go-sdk/common"
 	"github.com/LampardNguyen234/astra-integration-test/common/logger"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/onsi/gomega"
 )
 
 type ITestSuite interface {
@@ -41,6 +41,10 @@ func (c *TestClient) GetMasterKey() string {
 	return c.masterKey
 }
 
+func (c *TestClient) Address() sdk.AccAddress {
+	return account.MustNewPrivateKeyFromString(c.GetMasterKey()).AccAddress()
+}
+
 func (c *TestClient) FundAccount(recipient string, amount float64) {
 	if amount == 0 {
 		return
@@ -60,7 +64,12 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 
 	c.TxShouldPass(resp.TxHash)
 
-	c.ExpectBalance(recipient, sdk.NewIntFromBigInt(amt), assert.OpGTE)
+	balance, err := c.Balance(recipient)
+	if err != nil {
+		c.Log.Panicf("failed to get balance of %v: %v", recipient, err)
+	}
+
+	gomega.Expect(balance.Total).To(GTE(sdk.NewIntFromBigInt(amt)))
 }
 
 func (c *TestClient) Refund(privateKey string) {

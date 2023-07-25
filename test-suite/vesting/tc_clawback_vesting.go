@@ -6,7 +6,6 @@ import (
 	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
 	"github.com/LampardNguyen234/astra-integration-test/common"
 	. "github.com/LampardNguyen234/astra-integration-test/framework"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	vestingTypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -91,7 +90,7 @@ func (s *VestingSuite) testClawBackVesting() ITestNode {
 				vestingPeriod,
 			),
 		)
-		assert.NoError(err)
+		Expect(err).To(BeNil())
 		s.TxShouldPass(tx.TxHash)
 	}
 
