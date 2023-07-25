@@ -1,6 +1,9 @@
 package mint
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/AstraProtocol/astra/v2/x/mint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 func (s *MintSuite) NextInflationRate(inflation, bondedRatio sdk.Dec) sdk.Dec {
 	// (1 - bondedRatio/GoalBonded) * InflationRateChange
@@ -19,4 +22,20 @@ func (s *MintSuite) NextInflationRate(inflation, bondedRatio sdk.Dec) sdk.Dec {
 	}
 
 	return inflation
+}
+
+// getProportion returns the amount of coins given its distribution and the total amount of coins.
+func getProportion(
+	amt sdk.Int,
+	distribution sdk.Dec,
+) sdk.Int {
+	return sdk.NewDecFromInt(amt).Mul(distribution).TruncateInt()
+}
+
+func getAllProportions(blkProvision sdk.Int, distribution types.InflationDistribution) (
+	staking sdk.Int, foundation sdk.Int, community sdk.Int) {
+	staking = getProportion(blkProvision, distribution.StakingRewards)
+	foundation = getProportion(blkProvision, distribution.Foundation)
+	community = blkProvision.Sub(foundation).Sub(staking)
+	return
 }

@@ -7,7 +7,7 @@ import (
 	sdkCommon "github.com/LampardNguyen234/astra-go-sdk/common"
 	repoCommon "github.com/LampardNguyen234/astra-integration-test/common"
 	. "github.com/LampardNguyen234/astra-integration-test/framework"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/onsi/ginkgo/v2"
@@ -90,7 +90,7 @@ func (s *SendSuite) registerTests() ITestNode {
 						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
 					),
 				)
-				assert.ErrorContains(err, "insufficient funds")
+				common.ErrorContains(err, "insufficient funds")
 			}),
 		),
 
@@ -111,7 +111,7 @@ func (s *SendSuite) registerTests() ITestNode {
 						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
 					),
 				)
-				assert.ErrorContains(err, "out of gas")
+				common.ErrorContains(err, "out of gas")
 			}),
 
 			It("should not be able to send with gasPrice=0", func() {
@@ -128,7 +128,7 @@ func (s *SendSuite) registerTests() ITestNode {
 						sdk.NewCoins(sdk.NewCoin(sdkCommon.BaseDenom, sentAmt)),
 					),
 				)
-				assert.ErrorContains(err, "insufficient fee")
+				common.ErrorContains(err, "insufficient fee")
 			}),
 		),
 	)

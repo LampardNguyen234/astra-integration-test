@@ -42,6 +42,7 @@ func NewTestSuite(cfg SuiteConfig, log logger.Logger) (*TestSuite, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid `mint`: %v", err)
 		}
+		ms.SetMasterKey(cfg.MasterKey)
 		suites = append(suites, ms)
 	}
 	if cfg.VestingSuite.Enabled {

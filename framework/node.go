@@ -3,13 +3,18 @@ package framework
 import (
 	"fmt"
 	"github.com/fatih/color"
+	"log"
 	"runtime/debug"
 	"strings"
 )
 
 var (
-	globalNode ITestNode
+	logger log.Logger
 )
+
+var nodeLog struct {
+	level int
+}
 
 type ITestNode interface {
 	Text() string

@@ -1,42 +1,142 @@
 package mint
 
 import (
-	"fmt"
-	repoCommon "github.com/LampardNguyen234/astra-integration-test/common"
-	"github.com/LampardNguyen234/astra-integration-test/test-suite/assert"
+	"github.com/LampardNguyen234/astra-go-sdk/client"
+	. "github.com/LampardNguyen234/astra-integration-test/framework"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 func (s *MintSuite) RunTest() {
 	s.Start()
-	for i := 0; i < 5; i++ {
-		waitBlock := repoCommon.RandInt64() % 20
-		s.WaitForBlock(waitBlock)
 
-		msg := fmt.Sprintf("[TEST %v]", i)
-
-		// current mintInfo
-		oldMintINfo, err := s.MintInfo()
-		assert.NoError(err, msg)
-
-		expNextInflation := s.NextInflationRate(oldMintINfo.Inflation, oldMintINfo.BondedRatio)
-		expNextBlockProvision := expNextInflation.
-			MulInt(oldMintINfo.StakingSupply).
-			QuoInt(sdk.NewInt(int64(oldMintINfo.Params.InflationParameters.BlocksPerYear))).
-			TruncateInt()
-
-		s.WaitUntilBlock(oldMintINfo.Height + 1)
-		newMintInfo, err := s.MintInfo()
-		assert.NoError(err, msg)
-
-		assert.Compare(newMintInfo.CirculatingSupply, oldMintINfo.CirculatingSupply.Add(expNextBlockProvision), assert.OpGTE)
-		assert.Compare(newMintInfo.Inflation, expNextInflation, assert.OpEQ)
-		assert.Compare(
-			newMintInfo.FoundationBalance,
-			oldMintINfo.FoundationBalance.Add(newMintInfo.Params.InflationDistribution.Foundation.MulInt(expNextBlockProvision).TruncateInt()),
-			assert.OpGTE,
-		)
-	}
+	tc := s.registerTests()
+	tc.Run()
+	tc.Report()
 
 	s.Finished()
+}
+
+func (s *MintSuite) registerTests() ITestNode {
+	RegisterFailHandler(ginkgo.Fail)
+
+	var totalFee, burnedFee sdk.Int
+	var totalStaked, totalUnStaked sdk.Int
+	var oldMintInfo, newMintInfo *client.ProvisionInfo
+	var err error
+	var expNextInflation sdk.Dec
+	var expNextBlockProvision, expStakingRewards, expFoundation, expCommunity sdk.Int
+
+	root := Describe(s.Name(),
+		When("there are no staking-related transactions",
+			Before(func() {
+				oldMintInfo, newMintInfo, totalFee, err = s.mintInfoWithNoStakingTxs()
+				Expect(err).To(BeNil())
+
+				burnedFee = sdk.MustNewDecFromStr("0.5").MulInt(totalFee).TruncateInt()
+
+				expNextInflation = s.NextInflationRate(oldMintInfo.Inflation, oldMintInfo.BondedRatio)
+				expNextBlockProvision = expNextInflation.
+					MulInt(oldMintInfo.CirculatingSupply).
+					QuoInt(sdk.NewInt(int64(oldMintInfo.Params.InflationParameters.BlocksPerYear))).
+					TruncateInt()
+
+				expStakingRewards, expFoundation, expCommunity = getAllProportions(expNextBlockProvision, oldMintInfo.Params.InflationDistribution)
+				_ = expStakingRewards
+			}),
+
+			It("bonded must stay the same", func() {
+				Expect(newMintInfo.StakingSupply.Sub(oldMintInfo.StakingSupply)).To(
+					common.EQ(sdk.ZeroInt()),
+				)
+			}),
+
+			It("circulatingSupply must be correct", func() {
+				Expect(newMintInfo.CirculatingSupply.Sub(oldMintInfo.CirculatingSupply)).To(
+					Equal(expNextBlockProvision.Sub(burnedFee)))
+			}),
+
+			It("inflation must be correct", func() {
+				Expect(newMintInfo.Inflation).To(common.LTE(s.params.InflationParameters.InflationMax))
+				Expect(newMintInfo.Inflation).To(common.GTE(s.params.InflationParameters.InflationMin))
+				Expect(newMintInfo.Inflation).To(Equal(expNextInflation))
+			}),
+
+			It("totalMintedProvision must properly increase", func() {
+				Expect(newMintInfo.TotalMintedProvision.Sub(oldMintInfo.TotalMintedProvision)).To(Equal(
+					expNextBlockProvision))
+			}),
+
+			It("foundation balance must be correct", func() {
+				Expect(newMintInfo.FoundationBalance.Sub(oldMintInfo.FoundationBalance)).To(Equal(
+					expFoundation,
+				))
+			}),
+
+			It("community balance must be correct", func() {
+				// we allow a variant of 1000.
+				Expect(newMintInfo.CommunityBalance.Sub(oldMintInfo.CommunityBalance).Sub(expCommunity).Abs()).
+					To(common.LTE(
+						sdk.NewInt(1000),
+					))
+			}),
+		),
+		When("there are staking related transactions",
+			Before(func() {
+				oldMintInfo, newMintInfo, totalStaked, totalUnStaked, totalFee, err = s.mintInfoWithStakingTxs()
+				Expect(err).To(BeNil())
+
+				burnedFee = sdk.MustNewDecFromStr("0.5").MulInt(totalFee).TruncateInt()
+
+				expNextInflation = s.NextInflationRate(oldMintInfo.Inflation, oldMintInfo.BondedRatio)
+				expNextBlockProvision = expNextInflation.
+					MulInt(oldMintInfo.CirculatingSupply).
+					QuoInt(sdk.NewInt(int64(oldMintInfo.Params.InflationParameters.BlocksPerYear))).
+					TruncateInt()
+
+				expStakingRewards, expFoundation, expCommunity = getAllProportions(expNextBlockProvision, oldMintInfo.Params.InflationDistribution)
+				_ = expStakingRewards
+			}),
+
+			It("bonded must adjust", func() {
+				Expect(newMintInfo.StakingSupply.Sub(oldMintInfo.StakingSupply)).To(
+					common.EQ(totalStaked.Sub(totalUnStaked)),
+				)
+			}),
+
+			It("circulatingSupply must be correct", func() {
+				Expect(newMintInfo.CirculatingSupply.Sub(oldMintInfo.CirculatingSupply)).To(
+					Equal(expNextBlockProvision.Sub(burnedFee)))
+			}),
+
+			It("inflation must be correct", func() {
+				Expect(newMintInfo.Inflation).To(common.LTE(s.params.InflationParameters.InflationMax))
+				Expect(newMintInfo.Inflation).To(common.GTE(s.params.InflationParameters.InflationMin))
+				Expect(newMintInfo.Inflation).To(Equal(expNextInflation))
+			}),
+
+			It("totalMintedProvision must properly increase", func() {
+				Expect(newMintInfo.TotalMintedProvision.Sub(oldMintInfo.TotalMintedProvision)).To(Equal(
+					expNextBlockProvision))
+			}),
+
+			It("foundation balance must be correct", func() {
+				Expect(newMintInfo.FoundationBalance.Sub(oldMintInfo.FoundationBalance)).To(Equal(
+					expFoundation,
+				))
+			}),
+
+			It("community balance must be correct", func() {
+				// we allow a variant of 1000.
+				Expect(newMintInfo.CommunityBalance.Sub(oldMintInfo.CommunityBalance).Sub(expCommunity).Abs()).
+					To(common.LTE(
+						sdk.NewInt(1000),
+					))
+			}),
+		),
+	)
+
+	return root
 }

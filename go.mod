@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/AstraProtocol/astra/v2 v2.2.5
-	github.com/LampardNguyen234/astra-go-sdk v0.0.4
+	github.com/LampardNguyen234/astra-go-sdk v0.0.7
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/evmos/evmos/v6 v6.0.1
 	github.com/onsi/ginkgo/v2 v2.7.1
@@ -159,7 +159,6 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
-	github.com/LampardNguyen234/astra-go-sdk => /Users/lamp/go/src/github.com/LampardNguyen234/astra-go-sdk
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	github.com/evmos/evmos/v6 => github.com/AstraProtocol/evmos/v6 v6.1.3-astra
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
