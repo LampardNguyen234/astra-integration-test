@@ -62,6 +62,7 @@ func (s *VestingSuite) testCreateVesting() ITestNode {
 		operator = common.RandKeyInfo()
 		txParams = msg_params.TxParams{
 			PrivateKey: funder.PrivateKey,
+			GasLimit:   300000,
 		}
 		_ = operator
 
@@ -269,7 +270,7 @@ func (s *VestingSuite) testCreateVesting() ITestNode {
 				startTime:      time.Now(),
 				vestingPeriods: randPeriods(0.1),
 				lockupPeriods:  randPeriods(0.1),
-				expErr:         fmt.Errorf("account %s must be a clawback vesting account", regularAccount.CosmosAddress),
+				expErr:         fmt.Errorf("account %s already exists", regularAccount.CosmosAddress),
 			})
 		}),
 

@@ -61,6 +61,7 @@ func (s *VestingSuite) testClawBackVesting() ITestNode {
 		operator = common.RandKeyInfo()
 		txParams = msg_params.TxParams{
 			PrivateKey: funder.PrivateKey,
+			GasLimit:   300000,
 		}
 		_ = operator
 
@@ -78,6 +79,7 @@ func (s *VestingSuite) testClawBackVesting() ITestNode {
 	) {
 		params := msg_params.TxParams{
 			PrivateKey: funder.PrivateKey,
+			GasLimit:   500000,
 		}
 
 		tx, err := s.BuildAndSendTx(

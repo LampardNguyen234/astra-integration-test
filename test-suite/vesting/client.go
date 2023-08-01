@@ -35,6 +35,7 @@ func (s *VestingSuite) FundVesting(recipient string, amount float64, duration in
 	resp, err := s.TxCreateVesting(msg_params.TxCreateVestingParams{
 		TxParams: msg_params.TxParams{
 			PrivateKey: s.GetMasterKey(),
+			GasLimit:   300000,
 			Memo:       "Fund vesting from master",
 		},
 		ToAddr:          recipient,
