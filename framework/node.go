@@ -52,7 +52,7 @@ func (n *BaseNode) Succeeded() bool {
 
 func (n *BaseNode) Logs() []string {
 	if !n.processed {
-		return []string{"not processed"}
+		return []string{fmt.Sprintf("%v NOT PROCESSED", n.text)}
 	}
 	if n.Succeeded() {
 		return []string{fmt.Sprintf("%v PASSED", n.text)}

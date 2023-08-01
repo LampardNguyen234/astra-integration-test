@@ -7,6 +7,7 @@ require (
 	github.com/LampardNguyen234/astra-go-sdk v0.0.7
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/evmos/evmos/v6 v6.0.1
+	github.com/fatih/color v1.15.0
 	github.com/onsi/ginkgo/v2 v2.7.1
 	github.com/onsi/gomega v1.26.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -56,7 +57,6 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.19 // indirect
 	github.com/evmos/ethermint v0.19.3 // indirect
-	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff // indirect

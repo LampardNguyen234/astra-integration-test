@@ -20,7 +20,7 @@ func (c *TestClient) RandomTxs(msgTypes ...string) {
 	var msg sdk.Msg
 	msgType := sdk.MsgTypeURL(&types.MsgSend{})
 	if len(msgTypes) > 0 {
-		msgType = randFromList(msgType)
+		msgType = randFromList(msgTypes...)
 	}
 	switch msgType {
 	case sdk.MsgTypeURL(&types.MsgSend{}):

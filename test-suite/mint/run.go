@@ -1,6 +1,7 @@
 package mint
 
 import (
+	"fmt"
 	"github.com/LampardNguyen234/astra-go-sdk/client"
 	. "github.com/LampardNguyen234/astra-integration-test/framework"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
@@ -101,6 +102,10 @@ func (s *MintSuite) registerTests() ITestNode {
 			}),
 
 			It("bonded must adjust", func() {
+				fmt.Println(newMintInfo.StakingSupply)
+				fmt.Println(oldMintInfo.StakingSupply)
+				fmt.Println(totalStaked)
+				fmt.Println(totalUnStaked)
 				Expect(newMintInfo.StakingSupply.Sub(oldMintInfo.StakingSupply)).To(
 					common.EQ(totalStaked.Sub(totalUnStaked)),
 				)

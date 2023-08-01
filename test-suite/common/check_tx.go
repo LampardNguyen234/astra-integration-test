@@ -72,7 +72,7 @@ func (c *TestClient) TxShouldFailWithError(txHash string, errMsg string) {
 				if resp.Code == 0 {
 					c.Log.Panicf("expect tx %v to fail with error: %v", txHash, errMsg)
 				} else if !strings.Contains(resp.RawLog, errMsg) {
-					c.Log.Panicf("expect tx %v to fail with error %v, got %v", errMsg, resp.RawLog)
+					c.Log.Panicf("expect tx %v to fail with error %v, got %v", txHash, errMsg, resp.RawLog)
 				} else {
 					return
 				}

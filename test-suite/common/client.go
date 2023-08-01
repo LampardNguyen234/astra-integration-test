@@ -54,6 +54,7 @@ func (c *TestClient) FundAccount(recipient string, amount float64) {
 	resp, err := c.CosmosClient.TxSend(msg_params.TxSendRequestParams{
 		TxParams: msg_params.TxParams{
 			PrivateKey: c.GetMasterKey(),
+			GasLimit:   500000,
 		},
 		ToAddr: recipient,
 		Amount: amt,
