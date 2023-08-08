@@ -8,6 +8,7 @@ mkdir -p .testnets
 
 # change staking denom to ubaby
 cat .testnets/node0/astrad/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="aastra"' > .testnets/node0/astrad/config/tmp_genesis.json && mv .testnets/node0/astrad/config/tmp_genesis.json .testnets/node0/astrad/config/genesis.json
+cat .testnets/node0/astrad/config/genesis.json | jq '.app_state["staking"]["params"]["unbonding_time"]="60s"' > .testnets/node0/astrad/config/tmp_genesis.json && mv .testnets/node0/astrad/config/tmp_genesis.json .testnets/node0/astrad/config/genesis.json
 
 # update crisis variable to ubaby
 cat .testnets/node0/astrad/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="aastra"' > .testnets/node0/astrad/config/tmp_genesis.json && mv .testnets/node0/astrad/config/tmp_genesis.json .testnets/node0/astrad/config/genesis.json
