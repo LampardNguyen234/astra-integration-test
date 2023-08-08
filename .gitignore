@@ -15,3 +15,4 @@
 # vendor/
 default-config.json
 astra-test
+testnets/.testnets
