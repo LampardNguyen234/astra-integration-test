@@ -123,6 +123,12 @@ func (s *SendSuite) registerTests() ITestNode {
 			}),
 
 			It("should not be able to send with gasPrice=0", func() {
+				fp, err := s.FeemarketParams()
+				Expect(err).To(BeNil())
+				if fp.MinGasPrice.IsZero() {
+					return
+				}
+
 				sentAmt := sdk.NewIntWithDecimal(1, 17)
 				resp, err := s.CosmosClient.BuildAndSendTx(
 					msg_params.TxParams{

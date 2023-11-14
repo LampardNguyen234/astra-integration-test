@@ -5,9 +5,9 @@
     "Color": false
   },
   "TestSuite": {
-    "MasterKey": "359cff423c10c4452ca407e0a3ec3bb5c77709e4f56b2b1cf2855c8556939c09",
+    "MasterKey": "C18751B9668782CE1BA1B1826D5A58A0FDB256FFE500D778EB942B81B9CBC725",
     "SdkConfig": {
-      "Endpoint": "http://206.189.158.191",
+      "Endpoint": "http://127.0.0.1",
       "TendermintPort": "26657",
       "ChainID": "astra_11115-1"
     },
@@ -16,12 +16,15 @@
       "MasterKey": ""
     },
     "MintSuite": {
-      "Enabled": true,
+      "Enabled": false,
       "NumTests": 10
     },
     "VestingSuite": {
-      "Enabled": false,
+      "Enabled": true,
       "MasterKey": ""
+    },
+    "FeeBurnSuite": {
+      "Enabled": false
     }
   }
 }

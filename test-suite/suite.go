@@ -5,6 +5,7 @@ import (
 	"github.com/LampardNguyen234/astra-go-sdk/client"
 	"github.com/LampardNguyen234/astra-integration-test/common/logger"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/common"
+	"github.com/LampardNguyen234/astra-integration-test/test-suite/feeburn"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/mint"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/send"
 	"github.com/LampardNguyen234/astra-integration-test/test-suite/vesting"
@@ -42,7 +43,9 @@ func NewTestSuite(cfg SuiteConfig, log logger.Logger) (*TestSuite, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid `mint`: %v", err)
 		}
-		ms.SetMasterKey(cfg.MasterKey)
+		if cfg.MasterKey != "" {
+			ms.SetMasterKey(cfg.MasterKey)
+		}
 		suites = append(suites, ms)
 	}
 	if cfg.VestingSuite.Enabled {
@@ -54,6 +57,16 @@ func NewTestSuite(cfg SuiteConfig, log logger.Logger) (*TestSuite, error) {
 			return nil, fmt.Errorf("invalid `vesting`: %v", err)
 		}
 		suites = append(suites, ss)
+	}
+	if cfg.FeeBurnSuite.Enabled {
+		fb, err := feeburn.NewFeeburnSuite(cfg.FeeBurnSuite, c, log)
+		if err != nil {
+			return nil, fmt.Errorf("invalid `feeburn`: %v", err)
+		}
+		if cfg.MasterKey != "" {
+			fb.SetMasterKey(cfg.MasterKey)
+		}
+		suites = append(suites, fb)
 	}
 
 	return &TestSuite{

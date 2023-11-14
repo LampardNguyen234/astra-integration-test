@@ -14,7 +14,7 @@ import (
 
 func (c *TestClient) RandomTxs(msgTypes ...string) {
 	var randFromList = func(msgTypes ...string) string {
-		return msgTypes[repoCommon.RandInt()%len(msgTypes)]
+		return msgTypes[int(repoCommon.RandUint64()%uint64(len(msgTypes)))]
 	}
 
 	var msg sdk.Msg

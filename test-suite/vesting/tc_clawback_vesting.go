@@ -268,6 +268,12 @@ func (s *VestingSuite) processClawBackVestingTestCase(tc clawBackVestingTestCase
 			sdk.ZeroInt()))
 		Expect(newVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom)).To(Equal(
 			oldVestingBalance.Unlocked.AmountOf(sdkCommon.BaseDenom)))
+		s.Log.Debugf("%v, %v, %v, %v",
+			oldVestingBalance.Total.AmountOf(sdkCommon.BaseDenom),
+			newVestingBalance.Total.AmountOf(sdkCommon.BaseDenom),
+			oldVestingBalance.Total.Sub(newVestingBalance.Total).AmountOf(sdkCommon.BaseDenom),
+			tc.expClawBackedAmt,
+		)
 		Expect(oldVestingBalance.Total.Sub(newVestingBalance.Total).AmountOf(sdkCommon.BaseDenom)).To(Equal(
 			tc.expClawBackedAmt))
 		Expect(newDestBalance.Total.Sub(oldDestBalance.Total).String()).To(Equal(tc.expClawBackedAmt.String()))

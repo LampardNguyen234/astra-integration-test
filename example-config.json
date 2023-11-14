@@ -20,6 +20,9 @@
 		"VestingSuite": {
 			"Enabled": true,
 			"MasterKey": ""
+		},
+		"FeeBurnSuite": {
+			"Enabled": true
 		}
 	}
 }

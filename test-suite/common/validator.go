@@ -11,5 +11,5 @@ func (c *TestClient) MustRandActiveValidator() stakingTypes.Validator {
 		c.Log.Panicf("failed to get validator: %v", err)
 	}
 
-	return allValidators[common.RandInt()%len(allValidators)]
+	return allValidators[int(common.RandUint64()%uint64(len(allValidators)))]
 }

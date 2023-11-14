@@ -112,6 +112,13 @@ func (s *MintSuite) registerTests() ITestNode {
 			}),
 
 			It("circulatingSupply must be correct", func() {
+				s.Log.Debugf("%v, %v, %v, %v, %v",
+					newMintInfo.CirculatingSupply,
+					oldMintInfo.CirculatingSupply,
+					newMintInfo.CirculatingSupply.Sub(oldMintInfo.CirculatingSupply),
+					expNextBlockProvision.Sub(burnedFee),
+					burnedFee,
+				)
 				Expect(newMintInfo.CirculatingSupply.Sub(oldMintInfo.CirculatingSupply)).To(
 					Equal(expNextBlockProvision.Sub(burnedFee)))
 			}),
